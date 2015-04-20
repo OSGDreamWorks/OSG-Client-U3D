@@ -1,0 +1,10 @@
+message TaskConfig{
+	required int32 ID = 1;
+	required string Name = 2;	
+	required int32 Type = 3;
+	required int32 ActivityType = 4;
+	optional string Describe = 5;
+	required int32 Progress = 6;
+	required int32 Reward = 7;
+	required int32 NextTask = 8;
+}

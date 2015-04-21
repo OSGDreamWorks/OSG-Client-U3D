@@ -4,7 +4,6 @@ using System.Net.Sockets;
 using System.Net; 
 using System.Threading;
 using protobuf;
-using ProtoBuf;
 
 
 public class NetworkInterface {
@@ -220,16 +219,39 @@ public class NetworkInterface {
 				}
 			}
 
-			System.IO.MemoryStream stm = new System.IO.MemoryStream();
-			stm.Write(_datas, 4, size);
-			stm.Position = 0;
-			Request request = ProtoBuf.Serializer.Deserialize<Request>(stm);
+			System.IO.MemoryStream request_stm = new System.IO.MemoryStream(size);
+			request_stm.Write(_datas, 4, size);
+			request_stm.Position = 0;
+			Request request = ProtoBuf.Serializer.Deserialize<Request>(request_stm);
 
 			Debug.Log(string.Format("NetworkInterface::recv(): request->{0}", request.method));
 
-			System.IO.MemoryStream stm2 = new System.IO.MemoryStream(request.serialized_request);
-			LoginInfo login = ProtoBuf.Serializer.Deserialize<LoginInfo>(stm2);
-			Debug.Log(string.Format("NetworkInterface::test2(): data->{0}", login.serverIp));
+			string[] sArray=request.method.Split('.');
+			if (sArray.Length == 2) {
+				Type appType = app_.GetType();
+				System.Reflection.MethodInfo methodInfo = appType.GetMethod(string.Format("OnSync{0}", sArray[1]));
+
+				if (methodInfo != null) {
+					Type protoType = Type.GetType(request.method);
+					System.IO.MemoryStream proto_stm = new System.IO.MemoryStream(request.serialized_request);
+
+					System.Reflection.MethodInfo method = typeof(ProtoBuf.Serializer).GetMethod("Deserialize");
+					System.Reflection.MethodInfo generic = method.MakeGenericMethod(protoType);
+					object[] param = new object[] {proto_stm};
+					ProtoBuf.IExtensible protoTypeObj = (ProtoBuf.IExtensible)generic.Invoke(this, param);
+					
+					object[] paramProto = new object[] {protoTypeObj};
+					methodInfo.Invoke(app_, paramProto);
+				}else {
+					Debug.LogError(string.Format("NetworkInterface::recv(): Reflection {0} not exist!", request.method));
+				}
+
+			}
+			else
+			{
+				Debug.LogError(string.Format("NetworkInterface::recv(): method {0} error!", request.method));
+
+			}
 		}
 	}
 }

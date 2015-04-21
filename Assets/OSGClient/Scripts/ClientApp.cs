@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Threading;
+using protobuf;
 
 public class ClientApp : MonoBehaviour {
 	
@@ -75,5 +76,29 @@ public class ClientApp : MonoBehaviour {
 	
 	public NetworkInterface networkInterface(){
 		return networkInterface_;
+	}
+
+	public void OnSyncLoginInfo(ProtoBuf.IExtensible response)
+	{
+		LoginInfo info = (LoginInfo)response;
+		Debug.Log(string.Format("ClientApp::OnSyncLoginInfo() -> serverIp = {0}", info.serverIp));
+		
+		string[] sArray=info.serverIp.Split(':');
+		if(sArray.Length == 2 && !networkInterface_.connect(sArray[0], int.Parse(sArray[1])))
+		{
+			Debug.Log(string.Format("ClientApp::login_baseapp(): connect {0}:{1} is error!", baseappIP, baseappPort));
+		}
+	}
+	
+	public void OnSyncPingResult(ProtoBuf.IExtensible response)
+	{
+		PingResult ping = (PingResult)response;
+		Debug.Log(string.Format("ClientApp::OnSyncPingResult() -> server_time = {0}", ping.server_time));
+	}
+	
+	public void OnSyncLoginResult(ProtoBuf.IExtensible response)
+	{
+		LoginResult login = (LoginResult)response;
+		Debug.Log(string.Format("ClientApp::OnSyncLoginResult() -> sessionKey = {0}", login.sessionKey));
 	}
 }

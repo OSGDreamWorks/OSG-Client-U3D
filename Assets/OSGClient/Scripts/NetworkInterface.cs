@@ -63,6 +63,7 @@ public class NetworkInterface {
 		if(ClientApp.app.networkInterface().valid())
 			ClientApp.app.networkInterface().sock().EndConnect(asyncresult);
 
+		ClientApp.app.OnConnect ();
 		TimeoutObject.Set();
 
 	}
@@ -115,16 +116,38 @@ public class NetworkInterface {
 		return true;
 	}
 	
-	public void send(byte[] datas)
+	public bool send(string methodName, ProtoBuf.IExtensible protoTypeObj)
 	{
 		if(socket_ == null || socket_.Connected == false) 
 		{
-			throw new ArgumentException ("invalid socket!");
+			return false;
+			//throw new ArgumentException ("invalid socket!");
 		}
-		
+
+		System.IO.MemoryStream proto_stm = new System.IO.MemoryStream();
+		Request req = new Request ();
+		req.id = 0;
+		req.method = methodName;
+		req.timer = string.Format("{0}", (System.DateTime.Now.Ticks - 621355968000000000) / 10000000);
+		ProtoBuf.Serializer.Serialize(proto_stm, protoTypeObj);
+		req.serialized_request = proto_stm.ToArray ();
+
+		System.IO.MemoryStream request_stm = new System.IO.MemoryStream();
+		ProtoBuf.Serializer.Serialize(request_stm, req);
+
+		System.IO.MemoryStream data_stm = new System.IO.MemoryStream((int)request_stm.Length + 4);
+		data_stm.WriteByte ((byte)(request_stm.Length & 0xFF));
+		data_stm.WriteByte ((byte)((request_stm.Length & 0xFF00) >> 8));
+		data_stm.WriteByte ((byte)((request_stm.Length & 0xFF0000) >> 16));
+		data_stm.WriteByte ((byte)((request_stm.Length >> 24) & 0xFF));
+		request_stm.WriteTo (data_stm);
+
+		byte[] datas = data_stm.ToArray ();
+
 		if (datas == null || datas.Length == 0 ) 
 		{
-			throw new ArgumentException ("invalid datas!");
+			return false;
+			//throw new ArgumentException ("invalid datas!");
 		}
 		
 		try
@@ -144,8 +167,10 @@ public class NetworkInterface {
 			}
 			else{
 				Debug.LogError(string.Format("NetworkInterface::send(): socket error(" + err.ErrorCode + ")!"));
+				return false;
 			}
 		}
+		return true;
 	}
 	
 	public void recv()

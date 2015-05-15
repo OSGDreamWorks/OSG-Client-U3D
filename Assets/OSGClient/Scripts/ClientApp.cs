@@ -241,11 +241,21 @@ public class ClientApp : MonoBehaviour {
 		info = new PlayerBaseInfo ();
 		info.uid = login.uid;
 		info.name = "";
+		info.level = 0;
+		info.experience = 0;
+		info.HP = 0;
+		info.MP = 0;
+		info.Rage = 0;
+		info.maxHP = 0;
+		info.maxMP = 0;
+		info.maxRage = 0;
+		//sendTransform (transform);
 	}
 	
 	public void OnSyncPlayerBaseInfo(ProtoBuf.IExtensible response)
 	{
 		PlayerBaseInfo info = (PlayerBaseInfo)response;
 		Debug.Log(string.Format("ClientApp::OnSyncPlayerBaseInfo() -> ({0},{1},{2})", info.transform.position.X, info.transform.position.Y, info.transform.position.Z));
+		Debug.Log(string.Format("ClientApp::OnSyncPlayerBaseInfo() -> ({0},{1})", info.ToString(), info.HP));
 	}
 }

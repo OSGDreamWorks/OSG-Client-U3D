@@ -35,7 +35,6 @@ public class ClientApp : MonoBehaviour {
 		}
 		//
 		// test the login
-		sendLogin ("lional1987", "wzl7222504");
 	}
 	
 	// Update is called once per frame
@@ -83,9 +82,22 @@ public class ClientApp : MonoBehaviour {
 	{
 		Debug.Log ("sendTransform");
 		if (checkConnectGame() && info != null) {
-			info.transform = protobuf.Convert.FromU3DTransform(transform);
-			networkInterface_.send ("Connector.UpdatePlayerInfo", info);
+			info.stat.transform = protobuf.Convert.FromU3DTransform(transform);
+			networkInterface_.send ("Connector.UpdatePlayerStatusInfo", info);
 		}
+	}
+	
+    [ContextMenu("战斗测试")]
+	public void sendBattleTest() {
+		BattleTest test = new BattleTest ();
+		//test.moster = new System.Collections.Generic.List<CreatureBaseInfo> ();
+		//test.moster.Add()//这里定义你的测试怪物
+		networkInterface_.send ("Connector.BattleTest", test);
+	}
+
+	public void sendBattleAttackQueue(BattleAttackQueue queue)
+	{
+		networkInterface_.send ("Connector.BattleAttackQueue", queue);
 	}
 
 	public bool checkConnectGate()
@@ -137,6 +149,14 @@ public class ClientApp : MonoBehaviour {
 		}
 	}
 
+
+
+    [ContextMenu("Login")]
+    void _Login()
+    {
+        Debug.Log(ConnectGame("lional1987", "00000"));
+    }
+	
 	bool ConnectGate(string account, string passwd)
 	{
 		if (checkConnectGate ())
@@ -240,22 +260,30 @@ public class ClientApp : MonoBehaviour {
 		Debug.Log(string.Format("ClientApp::OnSyncLoginResult() -> sessionKey = {0}", login.sessionKey));
 		info = new PlayerBaseInfo ();
 		info.uid = login.uid;
-		info.name = "";
-		info.level = 0;
-		info.experience = 0;
-		info.HP = 0;
-		info.MP = 0;
-		info.Rage = 0;
-		info.maxHP = 0;
-		info.maxMP = 0;
-		info.maxRage = 0;
-		//sendTransform (transform);
+		info.stat = new StatusInfo ();
 	}
 	
 	public void OnSyncPlayerBaseInfo(ProtoBuf.IExtensible response)
 	{
 		PlayerBaseInfo info = (PlayerBaseInfo)response;
-		Debug.Log(string.Format("ClientApp::OnSyncPlayerBaseInfo() -> ({0},{1},{2})", info.transform.position.X, info.transform.position.Y, info.transform.position.Z));
-		Debug.Log(string.Format("ClientApp::OnSyncPlayerBaseInfo() -> ({0},{1})", info.ToString(), info.HP));
+		Debug.Log(string.Format("ClientApp::OnSyncPlayerBaseInfo() -> ({0},{1},{2})", info.stat.transform.position.X, info.stat.transform.position.Y, info.stat.transform.position.Z));
+	}
+
+	public void OnSyncNotifyBattleStart(ProtoBuf.IExtensible response)
+	{
+		NotifyBattleStart notify = (NotifyBattleStart)response;
+		Debug.Log(string.Format("ClientApp::OnSyncNotifyBattleStart"));
+	}
+	
+	public void OnSyncBattleInfo(ProtoBuf.IExtensible response)
+	{
+		BattleInfo info = (BattleInfo)response;
+		Debug.Log(string.Format("ClientApp::OnSyncBattleInfo"));
+	}
+	
+	public void OnSyncNotifyBattleEnd(ProtoBuf.IExtensible response)
+	{
+		NotifyBattleEnd notify = (NotifyBattleEnd)response;
+		Debug.Log(string.Format("ClientApp::OnSyncNotifyBattleEnd"));
 	}
 }
